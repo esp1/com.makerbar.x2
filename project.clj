@@ -24,5 +24,5 @@
              "-Dgstreamer.library.path=native/macosx/x86_64"
              "-Dgstreamer.plugin.path=native/macosx/x86_64/plugins"]
   :native-path "native"
-  :aot [x2.client.core]
+  :aot [com.makerbar.x2.client]
 )

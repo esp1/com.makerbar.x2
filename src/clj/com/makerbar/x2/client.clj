@@ -1,4 +1,4 @@
-(ns x2.client
+(ns com.makerbar.x2.client
   (:gen-class
     :name com.makerbar.x2.X2Client
     :methods [#^{:static true} [sendData [java.util.List] void]])

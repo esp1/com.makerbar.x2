@@ -1,6 +1,6 @@
-(ns x2.client-test
+(ns com.makerbar.x2.client-test
   (:use clojure.test
-        x2.client))
+        com.makerbar.x2.client))
 
 (deftest a-test
   (testing "FIXME, I fail."
