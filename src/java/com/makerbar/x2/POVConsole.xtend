@@ -206,7 +206,7 @@ class POVConsole extends PApplet {
 		
 		stroke(255)
 		text('''
-			Display dimensions: ��POVConfig::width�� x ��POVConfig::height��
+			Display dimensions: «POVConfig::width» x «POVConfig::height»
 			
 			----
 			
@@ -216,15 +216,15 @@ class POVConsole extends PApplet {
 			
 			----
 			
-			��IF image != null��
+			«IF image != null»
 				+/- : scale image
 				arrow keys : image offset
 				(hold shift for fine scale/offset)
-			��ENDIF��
+			«ENDIF»
 			
-			��IF scaleFactor != 1��scale factor: ��scaleFactor����ENDIF��
-			��IF xOffset != 0��x offset: ��xOffset����ENDIF��
-			��IF yOffset != 0��y offset: ��yOffset����ENDIF��
+			«IF scaleFactor != 1»scale factor: «scaleFactor»«ENDIF»
+			«IF xOffset != 0»x offset: «xOffset»«ENDIF»
+			«IF yOffset != 0»y offset: «yOffset»«ENDIF»
 			''', 20, 20)
 		
 		popStyle
@@ -309,11 +309,11 @@ class POVConsole extends PApplet {
 			val selectedFile = fileChooser.selectedFile
 			switch (fileChooser.fileFilter) {
 				case imageFileFilter: {
-					println('''Image file: ��selectedFile.canonicalPath��''')
+					println('''Image file: «selectedFile.canonicalPath»''')
 					setImage(loadImage(selectedFile.canonicalPath))
 				}
 				case movieFileFilter: {
-					println('''Movie file: ��selectedFile.canonicalPath��''')
+					println('''Movie file: «selectedFile.canonicalPath»''')
 					movie = setImage(new Movie(this, selectedFile.canonicalPath))
 					movie.loop
 				}
@@ -327,7 +327,7 @@ class POVConsole extends PApplet {
 		cursor(ARROW)
 		val selectedCamera = JOptionPane::showInputDialog(this, "", "Select camera", JOptionPane::PLAIN_MESSAGE, null, cameras, null) as String
 		if (selectedCamera != null) {
-			println('''Opening camera ��selectedCamera��''')
+			println('''Opening camera «selectedCamera»''')
 			camera = setImage(new Capture(this, selectedCamera))
 			camera.start
 		}
@@ -353,7 +353,7 @@ class POVConsole extends PApplet {
 		println("Discovering Teensy serial ports")
 		val ports = newArrayList(Serial::list).filter[ p | p.startsWith("/dev/tty.usbmodem") ]
 		for (port : ports) {
-			print('''Checking port ��port��...''')
+			print('''Checking port «port»...''')
 			val serial = new Serial(this, port)
 			
 			var char command = '?'
@@ -367,11 +367,11 @@ class POVConsole extends PApplet {
 				
 				while (serial.available > 0) {
 					val teensyId = Integer::valueOf(serial.readBytes.get(0))
-					println('''Found Teensy ��teensyId�� on port ��port��''')
+					println('''Found Teensy «teensyId» on port «port»''')
 					responseReceived = true
 					
 					if (teensyIdToSerialMap.containsKey(teensyId))
-						println('''Warning! Duplicate Teensy ID: ��teensyId��''')
+						println('''Warning! Duplicate Teensy ID: «teensyId»''')
 					else
 						teensyIdToSerialMap.put(teensyId, serial)
 				}
