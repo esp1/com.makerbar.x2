@@ -1,12 +1,10 @@
 package com.makerbar.x2
 
-import com.makerbar.x2.display.POVImageEncoder
 import com.makerbar.x2.display.config.POVConfig
 import com.makerbar.x2.display.config.SectorRowOrientation
 import java.awt.event.KeyEvent
 import java.io.File
 import java.io.FileReader
-import java.util.HashMap
 import java.util.Properties
 import javax.swing.JFileChooser
 import javax.swing.JOptionPane
@@ -14,7 +12,6 @@ import javax.swing.filechooser.FileNameExtensionFilter
 import processing.core.PApplet
 import processing.core.PGraphics
 import processing.core.PImage
-import processing.serial.Serial
 import processing.video.Capture
 import processing.video.Movie
 
@@ -37,9 +34,6 @@ class POVConsole extends PApplet {
 	PGraphics pg
 	PImage ximg
 	
-	val teensyIdToSerialMap = new HashMap<Integer, Serial>
-	POVImageEncoder imageEncoder// = new POVImageEncoder(povDisplay)
-	
 	float scaleFactor = 1
 	int xOffset
 	int yOffset
@@ -51,8 +45,6 @@ class POVConsole extends PApplet {
 		
 		pg = createGraphics(POVConfig::width, POVConfig::height)
 		ximg = createImage(POVConfig::width, POVConfig::height, ARGB)
-		
-//		configureTeensySerialPorts
 		
 		loadProperties
 	}
@@ -134,16 +126,7 @@ class POVConsole extends PApplet {
 		drawPOVConfig
 		
 		if (dirty) {
-			for (teensyId : teensyIdToSerialMap.keySet) {
-				val bytes = imageEncoder.processImage(ximg)
-				val serial = teensyIdToSerialMap.get(teensyId)
-				if (serial != null) {
-					val imageData = bytes.get(teensyId)
-					println('''Sending ��imageData.length�� bytes to teensy ��teensyId��''')
-					serial.write(imageData)
-				}
-			}
-			
+			println('''«X2Client::sendData(ximg)» fps''')
 			dirty = false
 		}
 	}
@@ -249,7 +232,6 @@ class POVConsole extends PApplet {
 				case VK_RIGHT: setXOffset(xOffset + 1 * factor)
 				case VK_UP: setYOffset(yOffset - 1 * factor)
 				case VK_DOWN: setYOffset(yOffset + 1 * factor)
-				case VK_E: { val ints = imageEncoder.processImage(ximg); println(imageEncoder.toBitmapH(ints)) }
 			}
 		}
 	}
@@ -345,48 +327,6 @@ class POVConsole extends PApplet {
 		image = img
 		dirty = true
 		img
-	}
-	
-	def void configureTeensySerialPorts() {
-		cursor(WAIT)
-		
-		println("Discovering Teensy serial ports")
-		val ports = newArrayList(Serial::list).filter[ p | p.startsWith("/dev/tty.usbmodem") ]
-		for (port : ports) {
-			print('''Checking port «port»...''')
-			val serial = new Serial(this, port)
-			
-			var char command = '?'
-			serial.write(command)
-			
-			var responseReceived = false
-			var i = 0
-			while (!responseReceived && i < 20) {
-				print(".")
-				Thread::sleep(500)
-				
-				while (serial.available > 0) {
-					val teensyId = Integer::valueOf(serial.readBytes.get(0))
-					println('''Found Teensy «teensyId» on port «port»''')
-					responseReceived = true
-					
-					if (teensyIdToSerialMap.containsKey(teensyId))
-						println('''Warning! Duplicate Teensy ID: «teensyId»''')
-					else
-						teensyIdToSerialMap.put(teensyId, serial)
-				}
-				i = i + 1
-			}
-		}
-		println("Finished scanning ports")
-		
-		cursor(ARROW)
-	}
-	
-	override stop() {
-		for (serial : teensyIdToSerialMap.values) {
-			serial.stop
-		}
 	}
 	
 }

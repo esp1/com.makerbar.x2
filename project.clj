@@ -9,7 +9,7 @@
   :javac-options ["-target" "1.7"
                   "-source" "1.7"]
   :repositories {"project" "file:repo"}
-  :dependencies [[aleph "0.3.0-rc2"]
+  :dependencies [[aleph "0.3.0"]
                  [org.clojure/clojure "1.5.1"]
                  [org.eclipse.xtend/org.eclipse.xtend.lib "2.4.3"]
                  [org.processing/core "2.0.2"]
@@ -24,5 +24,6 @@
              "-Dgstreamer.library.path=native/macosx/x86_64"
              "-Dgstreamer.plugin.path=native/macosx/x86_64/plugins"]
   :native-path "native"
-  :aot [com.makerbar.x2.client]
+  :profiles {:precomp {:java-source-paths ^:replace []
+                       :aot [com.makerbar.x2.client]}}
 )
