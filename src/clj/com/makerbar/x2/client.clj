@@ -17,9 +17,10 @@
 
 (defn x2-client
   "X2 client"
-  ([data] (x2-client "10.0.0.200" 10000 data))
+  ([data] (x2-client "192.168.9.3" 10000 data))
   ([host data] (x2-client host 10000 data))
   ([host port data]
+    (println "host" host ", port" port ", data" (count data))
     (let [ch (wait-for-result (tcp-client {:host host, :port port}))]
       (enqueue ch (encode send-codec data))
       (decode receive-codec (.toByteBuffer (wait-for-message ch))))))
@@ -27,4 +28,4 @@
 (defn -sendData
   [pimage]
   (let [data (seq (.pixels pimage))]
-    (x2-client data)))
+    (:fps (x2-client data))))

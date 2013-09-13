@@ -1,7 +1,5 @@
 package com.makerbar.x2
 
-import com.makerbar.x2.display.config.POVConfig
-import com.makerbar.x2.display.config.SectorRowOrientation
 import java.awt.event.KeyEvent
 import java.io.File
 import java.io.FileReader
@@ -15,11 +13,13 @@ import processing.core.PImage
 import processing.video.Capture
 import processing.video.Movie
 
-import static com.makerbar.x2.display.config.SectorRowOrientation.*
 import static java.awt.event.KeyEvent.*
 import static javax.swing.JFileChooser.*
 
 class POVConsole extends PApplet {
+
+	static val WIDTH = 4 * 56
+	static val HEIGHT = 6 * 17
 
 	def static void main(String[] args) {
 		PApplet::main("com.makerbar.x2.POVConsole")
@@ -32,7 +32,6 @@ class POVConsole extends PApplet {
 	Capture camera
 	
 	PGraphics pg
-	PImage ximg
 	
 	float scaleFactor = 1
 	int xOffset
@@ -43,8 +42,7 @@ class POVConsole extends PApplet {
 	override setup() {
 		size(800, 600)
 		
-		pg = createGraphics(POVConfig::width, POVConfig::height)
-		ximg = createImage(POVConfig::width, POVConfig::height, ARGB)
+		pg = createGraphics(WIDTH, HEIGHT)
 		
 		loadProperties
 	}
@@ -56,11 +54,16 @@ class POVConsole extends PApplet {
 		pushMatrix
 		translate(40, 40)
 		drawImage
-		translate(0, POVConfig::height + 50)
-		drawTransformedImage
+		translate(0, HEIGHT + 50)
 		popMatrix
 		
 		displayText
+		
+		if (dirty) {
+			val fps = X2Client::sendData(pg)
+			println('''«fps» fps''')
+			dirty = false
+		}
 	}
 	
 	def drawImage() {
@@ -88,7 +91,7 @@ class POVConsole extends PApplet {
 		// Draw frame
 		stroke(200)
 		noFill
-		rect(-1, -1, POVConfig::width + 2, POVConfig::height + 2)
+		rect(-1, -1, WIDTH + 2, HEIGHT + 2)
 		
 		popMatrix
 	}
@@ -96,89 +99,6 @@ class POVConsole extends PApplet {
 	def void movieEvent(Movie m) {
 		m.read
 		dirty = true
-	}
-	
-	def drawTransformedImage() {
-		pushMatrix
-		pushStyle
-		
-		ximg.loadPixels
-		for (sectorRowIndex : 0 ..< POVConfig::sectorRows.size) {
-			val sectorRow = POVConfig::sectorRows.get(sectorRowIndex)
-			for (y : 0 ..< POVConfig::sectorHeight) {
-				for (x : 0 ..< POVConfig::width) {
-					val originalY = (sectorRowIndex * POVConfig::sectorHeight) + y
-					val transformedY = switch (sectorRow) {
-						case TOP_DOWN: originalY
-						case BOTTOM_UP: ((sectorRowIndex + 1) * POVConfig::sectorHeight) - 1 - y
-					}
-					ximg.set(x, originalY, pg.get(x, transformedY))
-				}
-			}
-		}
-		ximg.updatePixels
-		
-		image(ximg, 0, 0)
-		
-		popStyle
-		popMatrix
-		
-		drawPOVConfig
-		
-		if (dirty) {
-			println('''«X2Client::sendData(ximg)» fps''')
-			dirty = false
-		}
-	}
-	
-	def drawPOVConfig() {
-		pushMatrix
-		pushStyle
-		noFill
-
-		for (sectorRow : POVConfig::sectorRows) {
-			// Sectors
-			pushMatrix
-			pushStyle
-			stroke(0, 50)  // Black
-			for (i : 0 ..< POVConfig::numSectorColumns) {
-				// Draw sector
-				rect(0, 0, POVConfig::sectorWidth, POVConfig::sectorHeight)
-				translate(POVConfig::sectorWidth, 0)
-			}
-			popStyle
-			popMatrix
-			
-			// Draw sector row
-			stroke(0, 0, 200, 50)  // Blue
-			rect(1, 1, POVConfig::width - 2, POVConfig::sectorHeight - 2)
-			
-			sectorRow.drawOrientationIndicator
-			
-			translate(0, POVConfig::sectorHeight)
-		}
-		
-		popStyle
-		popMatrix
-	}
-	
-	def drawOrientationIndicator(SectorRowOrientation sectorRow) {
-		pushMatrix
-		pushStyle
-		
-		translate(-10, POVConfig::sectorHeight / 2f)
-		
-		stroke(0)
-		fill(0)
-		line(0, -POVConfig::sectorHeight / 4f, 0, POVConfig::sectorHeight / 4f)
-		
-		if (sectorRow == BOTTOM_UP)
-			rotate(PI)
-		
-		triangle(-2, 0, 2, 0, 0, 4)
-		
-		popStyle
-		popMatrix
 	}
 	
 	def displayText() {
@@ -189,7 +109,7 @@ class POVConsole extends PApplet {
 		
 		stroke(255)
 		text('''
-			Display dimensions: «POVConfig::width» x «POVConfig::height»
+			Display dimensions: «WIDTH» x «HEIGHT»
 			
 			----
 			
