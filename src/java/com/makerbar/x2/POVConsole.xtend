@@ -42,6 +42,8 @@ class POVConsole extends PApplet {
 	override setup() {
 		size(800, 600)
 		
+		frameRate(30)
+		
 		pg = createGraphics(WIDTH, HEIGHT)
 		
 		loadProperties
