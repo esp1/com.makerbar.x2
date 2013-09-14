@@ -201,7 +201,7 @@ class POVConsole extends PApplet {
 	
 	val imageFileFilter = new FileNameExtensionFilter("Image file (*.png, *.jpg, *.bmp)", #{ "png", "jpg", "bmp" })
 	val movieFileFilter = new FileNameExtensionFilter("Movie file (*.mov)", #{ "mov" })
-	val fileChooser = new JFileChooser => [
+	val fileChooser = new JFileChooser(new File(".")) => [
 		acceptAllFileFilterUsed = false
 		addChoosableFileFilter = imageFileFilter
 		addChoosableFileFilter = movieFileFilter
