@@ -34,6 +34,8 @@ class POVConsole extends PApplet {
 	
 	PGraphics pg
 	
+	int imageWidth
+	int imageHeight
 	float scaleFactor = 1
 	int xOffset
 	int yOffset
@@ -41,7 +43,7 @@ class POVConsole extends PApplet {
 	var boolean dirty
 	
 	override setup() {
-		size(800, 600)
+		size(800, 300)
 		
 		frameRate(5)
 		
@@ -55,7 +57,7 @@ class POVConsole extends PApplet {
 		background(100)
 		
 		pushMatrix
-		translate(40, 40)
+		translate(80, 80)
 		drawImage
 		translate(0, HEIGHT + 50)
 		popMatrix
@@ -83,6 +85,9 @@ class POVConsole extends PApplet {
 				camera.read
 				dirty = true
 			}
+			
+			// xOffset - image.width
+			
 			pg.image(image, 0, 0)
 		}
 		
@@ -165,12 +170,12 @@ class POVConsole extends PApplet {
 	}
 	
 	def setXOffset(int xOffset) {
-		this.xOffset = xOffset
+		this.xOffset = xOffset % WIDTH
 		dirty = true
 	}
 	
 	def setYOffset(int yOffset) {
-		this.yOffset = yOffset
+		this.yOffset = yOffset % HEIGHT
 		dirty = true
 	}
 	
@@ -240,13 +245,12 @@ class POVConsole extends PApplet {
 				cameraProperties.put(kv.get(0), kv.get(1))
 			}
 			
-			camera = setImage(new Capture(this, selectedCamera))
-			
 			val size = cameraProperties.get("size")
 			val wh = size.split("x")
-			val width = Integer::valueOf(wh.get(0))
-			val height = Integer::valueOf(wh.get(1))
-			autoscale(width, height)
+			imageWidth = Integer::valueOf(wh.get(0))
+			imageHeight = Integer::valueOf(wh.get(1))
+			
+			camera = setImage(new Capture(this, selectedCamera))
 			
 			camera.start
 		}
@@ -264,19 +268,21 @@ class POVConsole extends PApplet {
 		image = img
 		dirty = true
 		
-		if (image.width > 0 && image.height > 0)
-			autoscale(image.width, image.height)
+		if (imageWidth <= 0 && image.width > 0) imageWidth = image.width
+		if (imageHeight <= 0 && image.height > 0) imageHeight = image.height
+		
+		autoscale
 		
 		img
 	}
 	
-	def autoscale(int width, int height) {
-		if (width < height) {
-			scaleFactor = (WIDTH as float) / width
-			yOffset = ((HEIGHT - (height * scaleFactor)) / 2) as int
+	def autoscale() {
+		if (imageWidth < imageHeight) {
+			scaleFactor = (WIDTH as float) / imageWidth
+			yOffset = ((HEIGHT - (imageHeight * scaleFactor)) / 2) as int
 		} else {
-			scaleFactor = (HEIGHT as float) / height
-			xOffset = ((WIDTH - (width * scaleFactor)) / 2) as int
+			scaleFactor = (HEIGHT as float) / imageHeight
+			xOffset = ((WIDTH - (imageWidth * scaleFactor)) / 2) as int
 		}
 	}
 	
