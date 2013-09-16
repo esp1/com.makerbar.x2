@@ -110,7 +110,7 @@ class POVConsole extends PApplet {
 	def drawImage() {
 		// Draw image on pg
 		pg.beginDraw
-		pg.background(100)
+		pg.background(0)
 		
 		// Tile globe image
 		if (image != null) {
@@ -299,6 +299,10 @@ class POVConsole extends PApplet {
 			movie.stop
 			movie = null
 		}
+		if (gif != null) {
+			gif.stop
+			gif = null
+		}
 		if (camera != null) {
 			camera.stop
 			camera = null
@@ -329,6 +333,9 @@ class POVConsole extends PApplet {
 			
 			val imageFileProperty = properties.getProperty("imageFile")
 			if (imageFileProperty != null) setImage(loadImage(imageFileProperty))
+			
+			val gifImageFileProperty = properties.getProperty("gifImageFile")
+			if (gifImageFileProperty != null) (gif = setImage(new Gif(this, gifImageFileProperty))).loop
 			
 			val movieFileProperty = properties.getProperty("movieFile")
 			if (movieFileProperty != null) (movie = setImage(new Movie(this, movieFileProperty))).loop
