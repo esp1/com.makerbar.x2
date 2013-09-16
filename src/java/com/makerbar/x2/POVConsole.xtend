@@ -37,9 +37,12 @@ class POVConsole extends PApplet {
 	
 	int imageWidth
 	int imageHeight
-	float scaleFactor = 1
-	int xOffset
-	int yOffset
+	float imageScaleFactor = 1
+	int imageXOffset
+	int imageYOffset
+	
+	int globeXOffset
+	int globeYOffset
 	
 	var boolean dirty
 	
@@ -79,29 +82,31 @@ class POVConsole extends PApplet {
 		pg.beginDraw
 		pg.background(100)
 		
+		// tile images
 		if (image != null) {
-			if (camera != null && camera.available) {
-				camera.read
-				dirty = true
-			}
-			
-			// tile images
-			val minX = if (xOffset < 0) xOffset else xOffset - (imageWidth * scaleFactor) as int
-			val minY = if (yOffset < 0) yOffset else yOffset - (imageHeight * scaleFactor) as int
+			val minX = if (globeXOffset > 0) globeXOffset - WIDTH else globeXOffset
+			val minY = if (globeYOffset > 0) globeYOffset - HEIGHT else globeYOffset
 			
 			var x = minX
 			while (x < WIDTH) {
 				var y = minY
 				while (y < HEIGHT) {
+					if (camera != null && camera.available) {
+						camera.read
+						dirty = true
+					}
+					
 					pg.pushMatrix
 					pg.translate(x, y)
-					pg.scale(scaleFactor)
+					pg.translate(imageXOffset, imageYOffset)
+					pg.scale(imageScaleFactor)
 					pg.image(image, 0, 0)
 					pg.popMatrix
-					y = y + (imageHeight * scaleFactor) as int
+					
+					y = y + HEIGHT
 				}
 				
-				x = x + (imageWidth * scaleFactor) as int
+				x = x + WIDTH
 			}
 		}
 		
@@ -147,9 +152,9 @@ class POVConsole extends PApplet {
 				(hold shift for fine scale/offset)
 			«ENDIF»
 			
-			«IF scaleFactor != 1»scale factor: «scaleFactor»«ENDIF»
-			«IF xOffset != 0»x offset: «xOffset»«ENDIF»
-			«IF yOffset != 0»y offset: «yOffset»«ENDIF»
+			«IF imageScaleFactor != 1»scale factor: «imageScaleFactor»«ENDIF»
+			«IF globeXOffset != 0»x offset: «globeXOffset»«ENDIF»
+			«IF globeYOffset != 0»y offset: «globeYOffset»«ENDIF»
 			''', 20, 20)
 		
 		popStyle
@@ -168,28 +173,30 @@ class POVConsole extends PApplet {
 				case VK_L: loadProperties
 				case VK_O: openImageFile
 				case VK_C: captureVideo
-				case VK_EQUALS: setScaleFactor(scaleFactor + 0.01f * factor)
-				case VK_MINUS: setScaleFactor(scaleFactor - 0.01f * factor)
-				case VK_LEFT: setXOffset(xOffset - 1 * factor)
-				case VK_RIGHT: setXOffset(xOffset + 1 * factor)
-				case VK_UP: setYOffset(yOffset - 1 * factor)
-				case VK_DOWN: setYOffset(yOffset + 1 * factor)
+				case VK_EQUALS: setImageScaleFactor(imageScaleFactor + 0.01f * factor)
+				case VK_MINUS: setImageScaleFactor(imageScaleFactor - 0.01f * factor)
+				case VK_LEFT: setGlobeXOffset(globeXOffset - 1 * factor)
+				case VK_RIGHT: setGlobeXOffset(globeXOffset + 1 * factor)
+				case VK_UP: setGlobeYOffset(globeYOffset - 1 * factor)
+				case VK_DOWN: setGlobeYOffset(globeYOffset + 1 * factor)
 			}
 		}
 	}
 	
-	def setScaleFactor(float scaleFactor) {
-		this.scaleFactor = scaleFactor
+	def setImageScaleFactor(float scaleFactor) {
+		this.imageScaleFactor = scaleFactor
 		dirty = true
 	}
 	
-	def setXOffset(int xOffset) {
-		this.xOffset = xOffset % ((imageWidth * scaleFactor) as int)
+	def setGlobeXOffset(int xOffset) {
+		globeXOffset = xOffset % WIDTH
+		if (globeXOffset < 0) globeXOffset = globeXOffset + WIDTH
 		dirty = true
 	}
 	
-	def setYOffset(int yOffset) {
-		this.yOffset = yOffset % ((imageHeight * scaleFactor) as int)
+	def setGlobeYOffset(int yOffset) {
+		globeYOffset = yOffset % HEIGHT
+		if (globeYOffset < 0) globeYOffset = globeYOffset + HEIGHT
 		dirty = true
 	}
 	
@@ -211,13 +218,13 @@ class POVConsole extends PApplet {
 			selectedCamera = properties.getProperty("camera")
 			
 			val scaleFactorProperty = properties.getProperty("scaleFactor")
-			if (scaleFactorProperty != null) setScaleFactor(Float::parseFloat(scaleFactorProperty))
+			if (scaleFactorProperty != null) setImageScaleFactor(Float::parseFloat(scaleFactorProperty))
 			
 			val xOffsetProperty = properties.getProperty("xOffset")
-			if (xOffsetProperty != null) setXOffset(Integer::parseInt(xOffsetProperty))
+			if (xOffsetProperty != null) setGlobeXOffset(Integer::parseInt(xOffsetProperty))
 			
 			val yOffsetProperty = properties.getProperty("yOffset")
-			if (yOffsetProperty != null) setYOffset(Integer::parseInt(yOffsetProperty))
+			if (yOffsetProperty != null) setGlobeYOffset(Integer::parseInt(yOffsetProperty))
 		}
 	}
 	
@@ -276,6 +283,10 @@ class POVConsole extends PApplet {
 	}
 	
 	def <T extends PImage> setImage(T img) {
+		// Reset stuff
+		globeXOffset = 0
+		globeYOffset = 0
+		
 		if (movie != null) {
 			movie.stop
 			movie = null
@@ -284,6 +295,8 @@ class POVConsole extends PApplet {
 			camera.stop
 			camera = null
 		}
+		
+		// Set stuff
 		image = img
 		dirty = true
 		
@@ -297,11 +310,11 @@ class POVConsole extends PApplet {
 	
 	def autoscale() {
 		if (imageWidth < imageHeight) {
-			scaleFactor = (WIDTH as float) / imageWidth
-			yOffset = ((HEIGHT - (imageHeight * scaleFactor)) / 2) as int
+			imageScaleFactor = (WIDTH as float) / imageWidth
+			imageYOffset = ((HEIGHT - (imageHeight * imageScaleFactor)) / 2) as int
 		} else {
-			scaleFactor = (HEIGHT as float) / imageHeight
-			xOffset = ((WIDTH - (imageWidth * scaleFactor)) / 2) as int
+			imageScaleFactor = (HEIGHT as float) / imageHeight
+			imageXOffset = ((WIDTH - (imageWidth * imageScaleFactor)) / 2) as int
 		}
 	}
 	
