@@ -273,8 +273,10 @@ class POVConsole extends PApplet {
 	def autoscale(int width, int height) {
 		if (width < height) {
 			scaleFactor = (WIDTH as float) / width
+			yOffset = ((HEIGHT - (height * scaleFactor)) / 2) as int
 		} else {
 			scaleFactor = (HEIGHT as float) / height
+			xOffset = ((WIDTH - (width * scaleFactor)) / 2) as int
 		}
 	}
 	
