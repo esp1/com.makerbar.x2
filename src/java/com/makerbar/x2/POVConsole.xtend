@@ -16,6 +16,7 @@ import processing.video.Movie
 
 import static java.awt.event.KeyEvent.*
 import static javax.swing.JFileChooser.*
+import gifAnimation.Gif
 
 class POVConsole extends PApplet {
 
@@ -29,6 +30,7 @@ class POVConsole extends PApplet {
 	//
 	
 	PImage image
+	Gif gif
 	Movie movie
 	Capture camera
 	String selectedCamera
@@ -248,11 +250,13 @@ class POVConsole extends PApplet {
 		}
 	}
 	
-	val imageFileFilter = new FileNameExtensionFilter("Image file (*.png, *.jpg, *.gif, *.bmp)", #{ "png", "jpg", "gif", "bmp" })
+	val imageFileFilter = new FileNameExtensionFilter("Image file (*.png, *.jpg, *.bmp)", #{ "png", "jpg", "bmp" })
+	val gifImageFileFilter = new FileNameExtensionFilter("GIF Image file (*.gif)", #{ "gif" })
 	val movieFileFilter = new FileNameExtensionFilter("Movie file (*.mov)", #{ "mov" })
 	val fileChooser = new JFileChooser(new File(".")) => [
 		acceptAllFileFilterUsed = false
 		addChoosableFileFilter = imageFileFilter
+		addChoosableFileFilter = gifImageFileFilter
 		addChoosableFileFilter = movieFileFilter
 		fileFilter = imageFileFilter
 	]
@@ -264,6 +268,11 @@ class POVConsole extends PApplet {
 				case imageFileFilter: {
 					println('''Image file: «selectedFile.canonicalPath»''')
 					setImage(loadImage(selectedFile.canonicalPath))
+				}
+				case gifImageFileFilter: {
+					println('''GIF Image file: «selectedFile.canonicalPath»''')
+					gif = setImage(new Gif(this, selectedFile.canonicalPath))
+					gif.loop
 				}
 				case movieFileFilter: {
 					println('''Movie file: «selectedFile.canonicalPath»''')
