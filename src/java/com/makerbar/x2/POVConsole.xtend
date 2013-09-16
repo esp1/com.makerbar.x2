@@ -49,6 +49,7 @@ class POVConsole extends PApplet {
 	long then = System::currentTimeMillis / 33
 	int rotationSpeed
 	int rotationDirection = 1
+	boolean flipImage = false
 	
 	var boolean dirty
 	
@@ -74,6 +75,12 @@ class POVConsole extends PApplet {
 		
 		pushMatrix
 		translate(40, 80)
+		
+		if (flipImage) {
+			scale(-1, 1)
+			translate(-(WIDTH - 1), 0)
+		}
+		
 		drawImage
 		
 		// Draw frame
@@ -160,9 +167,11 @@ class POVConsole extends PApplet {
 				(hold shift for fine scale/offset)
 				0-9 : rotation speed
 				R : change rotation direction
+				F : flip image
 			«ENDIF»
 			
 			«IF rotationSpeed > 0»rotation speed: «rotationSpeed»«ENDIF»
+			«IF flipImage»flipped«ENDIF»
 			«IF imageScaleFactor != 1»scale factor: «imageScaleFactor»«ENDIF»
 			«IF globeXOffset != 0»x offset: «globeXOffset»«ENDIF»
 			«IF globeYOffset != 0»y offset: «globeYOffset»«ENDIF»
@@ -201,6 +210,10 @@ class POVConsole extends PApplet {
 				case VK_8: rotationSpeed = 8
 				case VK_9: rotationSpeed = 9
 				case VK_R: rotationDirection = if (rotationDirection == 1) -1 else 1
+				case VK_F: {
+					flipImage = !flipImage
+					rotationDirection = if (rotationDirection == 1) -1 else 1
+				}
 			}
 		}
 	}
@@ -315,6 +328,9 @@ class POVConsole extends PApplet {
 		// Reset stuff
 		globeXOffset = 0
 		globeYOffset = 0
+		flipImage = false
+		rotationDirection = 1
+		rotationSpeed = 0
 		
 		if (movie != null) {
 			movie.stop
