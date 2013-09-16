@@ -31,6 +31,7 @@ class POVConsole extends PApplet {
 	PImage image
 	Movie movie
 	Capture camera
+	String selectedCamera
 	
 	PGraphics pg
 	
@@ -45,7 +46,7 @@ class POVConsole extends PApplet {
 	override setup() {
 		size(800, 300)
 		
-		frameRate(5)
+		frameRate(30)
 		
 		pg = createGraphics(WIDTH, HEIGHT)
 		
@@ -77,18 +78,46 @@ class POVConsole extends PApplet {
 		// Draw image on pg
 		pg.beginDraw
 		pg.background(100)
-		pg.translate(xOffset, yOffset)
-		pg.scale(scaleFactor)
 		
 		if (image != null) {
+			pg.scale(scaleFactor)
+			
 			if (camera != null && camera.available) {
 				camera.read
 				dirty = true
 			}
 			
-			// xOffset - image.width
-			
-			pg.image(image, 0, 0)
+			// tile images
+			var x = xOffset
+			while (x >= -WIDTH / scaleFactor) {
+				var y = yOffset
+				while (y >= -HEIGHT / scaleFactor) {
+					pg.image(image, x, y)
+					y = y - imageHeight
+				}
+				y = yOffset + imageHeight
+				while (y < HEIGHT / scaleFactor) {
+					pg.image(image, x, y)
+					y = y + imageHeight
+				}
+				
+				x = x - imageWidth
+			}
+			x = xOffset
+			while (x < WIDTH / scaleFactor) {
+				var y = yOffset
+				while (y >= -HEIGHT / scaleFactor) {
+					pg.image(image, x, y)
+					y = y - imageHeight
+				}
+				y = yOffset + imageHeight
+				while (y < HEIGHT / scaleFactor) {
+					pg.image(image, x, y)
+					y = y + imageHeight
+				}
+				
+				x = x + imageWidth
+			}
 		}
 		
 		pg.endDraw
@@ -170,12 +199,12 @@ class POVConsole extends PApplet {
 	}
 	
 	def setXOffset(int xOffset) {
-		this.xOffset = xOffset % WIDTH
+		this.xOffset = xOffset % ((imageWidth / scaleFactor) as int)
 		dirty = true
 	}
 	
 	def setYOffset(int yOffset) {
-		this.yOffset = yOffset % HEIGHT
+		this.yOffset = yOffset % ((imageHeight / scaleFactor) as int)
 		dirty = true
 	}
 	
@@ -193,6 +222,8 @@ class POVConsole extends PApplet {
 			
 			val movieFileProperty = properties.getProperty("movieFile")
 			if (movieFileProperty != null) (movie = setImage(new Movie(this, movieFileProperty))).loop
+			
+			selectedCamera = properties.getProperty("camera")
 			
 			val scaleFactorProperty = properties.getProperty("scaleFactor")
 			if (scaleFactorProperty != null) setScaleFactor(Float::parseFloat(scaleFactorProperty))
@@ -232,10 +263,13 @@ class POVConsole extends PApplet {
 	}
 	
 	def void captureVideo() {
-		cursor(WAIT)
-		val cameras = Capture::list
-		cursor(ARROW)
-		val selectedCamera = JOptionPane::showInputDialog(this, "", "Select camera", JOptionPane::PLAIN_MESSAGE, null, cameras, null) as String
+		if (selectedCamera == null) {
+			cursor(WAIT)
+			val cameras = Capture::list
+			cursor(ARROW)
+			selectedCamera = JOptionPane::showInputDialog(this, "", "Select camera", JOptionPane::PLAIN_MESSAGE, null, cameras, null) as String
+		}
+		
 		if (selectedCamera != null) {
 			println('''Opening camera «selectedCamera»''')
 			
@@ -268,8 +302,8 @@ class POVConsole extends PApplet {
 		image = img
 		dirty = true
 		
-		if (imageWidth <= 0 && image.width > 0) imageWidth = image.width
-		if (imageHeight <= 0 && image.height > 0) imageHeight = image.height
+		if (image.width > 0) imageWidth = image.width
+		if (image.height > 0) imageHeight = image.height
 		
 		autoscale
 		
