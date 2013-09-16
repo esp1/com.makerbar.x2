@@ -51,7 +51,12 @@ class POVConsole extends PApplet {
 	int rotationDirection = 1
 	boolean flipImage = false
 	
+	float brightness = 0
+	float contrast = 1
+	
 	var boolean dirty
+	
+	double fps
 	
 	override setup() {
 		size(700, 300)
@@ -91,14 +96,17 @@ class POVConsole extends PApplet {
 		popStyle
 		
 		popMatrix
+
+		text('''Display dimensions: «WIDTH» x «HEIGHT»''', 40, 80 - 20 - textDescent)
 		
 		displayText
 		
 		if (dirty) {
-//			val fps = X2Client::sendData(pg)
-//			println('''«fps» fps''')
-//			dirty = false
+//			fps = X2Client::sendData(pg)
+			dirty = false
 		}
+		
+		text(String::format("%1.2f FPS", fps), 40, 80 + HEIGHT + 20 + textAscent)
 	}
 	
 	def drawImage() {
@@ -106,8 +114,31 @@ class POVConsole extends PApplet {
 		pg.beginDraw
 		pg.background(100)
 		
-		// tile images
+		// Tile globe image
 		if (image != null) {
+			// Apply brightness & contrast
+			val xImg = new PImage(image.width, image.height)
+			image.loadPixels
+			for (i : 0 ..< image.width * image.height) {
+				val inColor = image.pixels.get(i)
+				var r = (inColor >> 16).bitwiseAnd(0xFF)
+       			var g = (inColor >> 8).bitwiseAnd(0xFF)
+       			var b = inColor.bitwiseAnd(0xFF)
+
+				// apply contrast (multiplication) and brightness (addition)
+				r = (r * contrast + brightness) as int
+				g = (g * contrast + brightness) as int
+				b = (b * contrast + brightness) as int
+   
+				r = if (r < 0) 0 else if (r > 255) 255 else r
+				g = if (g < 0) 0 else if (g > 255) 255 else g
+				b = if (b < 0) 0 else if (b > 255) 255 else b
+   
+				xImg.pixels.set(i, 0xff000000.bitwiseOr(r << 16).bitwiseOr(g << 8).bitwiseOr(b))
+			}
+			xImg.updatePixels
+			
+			// Draw globe
 			val minX = if (globeXOffset > 0) globeXOffset - WIDTH else globeXOffset
 			val minY = if (globeYOffset > 0) globeYOffset - HEIGHT else globeYOffset
 			
@@ -124,7 +155,7 @@ class POVConsole extends PApplet {
 					pg.translate(x, y)
 					pg.translate(imageXOffset, imageYOffset)
 					pg.scale(imageScaleFactor)
-					pg.image(image, 0, 0)
+					pg.image(xImg, 0, 0)
 					pg.popMatrix
 					
 					y = y + HEIGHT
@@ -148,8 +179,6 @@ class POVConsole extends PApplet {
 	def displayText() {
 		pushMatrix
 		pushStyle
-
-		text('''Display dimensions: «WIDTH» x «HEIGHT»''', 40, 20)
 		
 		translate(400, 20)
 		
@@ -172,6 +201,8 @@ class POVConsole extends PApplet {
 			
 			«IF rotationSpeed > 0»rotation speed: «rotationSpeed»«ENDIF»
 			«IF flipImage»flipped«ENDIF»
+			«IF brightness != 0»brightness: «brightness»«ENDIF»
+			«IF contrast != 1»contrast: «contrast»«ENDIF»
 			«IF imageScaleFactor != 1»scale factor: «imageScaleFactor»«ENDIF»
 			«IF globeXOffset != 0»x offset: «globeXOffset»«ENDIF»
 			«IF globeYOffset != 0»y offset: «globeYOffset»«ENDIF»
@@ -191,14 +222,18 @@ class POVConsole extends PApplet {
 			val factor = if (event.shiftDown) 1 else 10
 			switch (event.keyCode) {
 				case VK_L: loadProperties
+				
 				case VK_O: openImageFile
 				case VK_C: captureVideo
+				
 				case VK_EQUALS: setImageScaleFactor(imageScaleFactor + 0.01f * factor)
 				case VK_MINUS: setImageScaleFactor(imageScaleFactor - 0.01f * factor)
+				
 				case VK_LEFT: setGlobeXOffset(globeXOffset - 1 * factor)
 				case VK_RIGHT: setGlobeXOffset(globeXOffset + 1 * factor)
 				case VK_UP: setGlobeYOffset(globeYOffset - 1 * factor)
 				case VK_DOWN: setGlobeYOffset(globeYOffset + 1 * factor)
+				
 				case VK_0: rotationSpeed = 0
 				case VK_1: rotationSpeed = 1
 				case VK_2: rotationSpeed = 2
@@ -209,30 +244,73 @@ class POVConsole extends PApplet {
 				case VK_7: rotationSpeed = 7
 				case VK_8: rotationSpeed = 8
 				case VK_9: rotationSpeed = 9
-				case VK_R: rotationDirection = if (rotationDirection == 1) -1 else 1
-				case VK_F: {
-					flipImage = !flipImage
-					rotationDirection = if (rotationDirection == 1) -1 else 1
-				}
+				case VK_R: toggleRotationDirection
+				
+				case VK_F: toggleFlipImage
+				
+				case VK_S: setBrightness(brightness - 1 * factor)
+				case VK_W: setBrightness(brightness + 1 * factor)
+				
+				case VK_A: setContrast(contrast - 1 * factor)
+				case VK_D: setContrast(contrast + 1 * factor)
+				
+				case VK_ESCAPE: resetSettings
 			}
+			
+			dirty = true
 		}
 	}
 	
 	def setImageScaleFactor(float scaleFactor) {
 		this.imageScaleFactor = scaleFactor
-		dirty = true
 	}
 	
 	def setGlobeXOffset(int xOffset) {
 		globeXOffset = xOffset % WIDTH
 		if (globeXOffset < 0) globeXOffset = globeXOffset + WIDTH
-		dirty = true
 	}
 	
 	def setGlobeYOffset(int yOffset) {
 		globeYOffset = yOffset % HEIGHT
 		if (globeYOffset < 0) globeYOffset = globeYOffset + HEIGHT
-		dirty = true
+	}
+	
+	def toggleRotationDirection() {
+		rotationDirection = if (rotationDirection == 1) -1 else 1
+	}
+	
+	def toggleFlipImage() {
+		flipImage = !flipImage
+		rotationDirection = if (rotationDirection == 1) -1 else 1
+	}
+	
+	def setBrightness(float brightness) {
+		this.brightness = brightness
+	}
+	
+	def setContrast(float contrast) {
+		this.contrast = if (contrast <= 0) 1 else contrast
+	}
+	
+	def resetSettings() {
+		if (movie != null) {
+			movie.stop
+			movie = null
+		}
+		if (camera != null) {
+			camera.stop
+			camera = null
+		}
+		
+		globeXOffset = 0
+		globeYOffset = 0
+		
+		rotationSpeed = 0
+		rotationDirection = 1
+		flipImage = false
+		
+		brightness = 0
+		contrast = 1
 	}
 	
 	def loadProperties() {
@@ -325,23 +403,8 @@ class POVConsole extends PApplet {
 	}
 	
 	def <T extends PImage> setImage(T img) {
-		// Reset stuff
-		globeXOffset = 0
-		globeYOffset = 0
-		flipImage = false
-		rotationDirection = 1
-		rotationSpeed = 0
+		resetSettings
 		
-		if (movie != null) {
-			movie.stop
-			movie = null
-		}
-		if (camera != null) {
-			camera.stop
-			camera = null
-		}
-		
-		// Set stuff
 		image = img
 		dirty = true
 		
