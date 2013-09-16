@@ -80,43 +80,28 @@ class POVConsole extends PApplet {
 		pg.background(100)
 		
 		if (image != null) {
-			pg.scale(scaleFactor)
-			
 			if (camera != null && camera.available) {
 				camera.read
 				dirty = true
 			}
 			
 			// tile images
-			var x = xOffset
-			while (x >= -WIDTH / scaleFactor) {
-				var y = yOffset
-				while (y >= -HEIGHT / scaleFactor) {
-					pg.image(image, x, y)
-					y = y - imageHeight
-				}
-				y = yOffset + imageHeight
-				while (y < HEIGHT / scaleFactor) {
-					pg.image(image, x, y)
-					y = y + imageHeight
-				}
-				
-				x = x - imageWidth
-			}
-			x = xOffset
-			while (x < WIDTH / scaleFactor) {
-				var y = yOffset
-				while (y >= -HEIGHT / scaleFactor) {
-					pg.image(image, x, y)
-					y = y - imageHeight
-				}
-				y = yOffset + imageHeight
-				while (y < HEIGHT / scaleFactor) {
-					pg.image(image, x, y)
-					y = y + imageHeight
+			val minX = if (xOffset < 0) xOffset else xOffset - (imageWidth * scaleFactor) as int
+			val minY = if (yOffset < 0) yOffset else yOffset - (imageHeight * scaleFactor) as int
+			
+			var x = minX
+			while (x < WIDTH) {
+				var y = minY
+				while (y < HEIGHT) {
+					pg.pushMatrix
+					pg.translate(x, y)
+					pg.scale(scaleFactor)
+					pg.image(image, 0, 0)
+					pg.popMatrix
+					y = y + (imageHeight * scaleFactor) as int
 				}
 				
-				x = x + imageWidth
+				x = x + (imageWidth * scaleFactor) as int
 			}
 		}
 		
@@ -199,12 +184,12 @@ class POVConsole extends PApplet {
 	}
 	
 	def setXOffset(int xOffset) {
-		this.xOffset = xOffset % ((imageWidth / scaleFactor) as int)
+		this.xOffset = xOffset % ((imageWidth * scaleFactor) as int)
 		dirty = true
 	}
 	
 	def setYOffset(int yOffset) {
-		this.yOffset = yOffset % ((imageHeight / scaleFactor) as int)
+		this.yOffset = yOffset % ((imageHeight * scaleFactor) as int)
 		dirty = true
 	}
 	
