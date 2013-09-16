@@ -3,6 +3,7 @@ package com.makerbar.x2
 import java.awt.event.KeyEvent
 import java.io.File
 import java.io.FileReader
+import java.util.HashMap
 import java.util.Properties
 import javax.swing.JFileChooser
 import javax.swing.JOptionPane
@@ -42,7 +43,7 @@ class POVConsole extends PApplet {
 	override setup() {
 		size(800, 600)
 		
-		frameRate(30)
+		frameRate(5)
 		
 		pg = createGraphics(WIDTH, HEIGHT)
 		
@@ -62,9 +63,9 @@ class POVConsole extends PApplet {
 		displayText
 		
 		if (dirty) {
-			val fps = X2Client::sendData(pg)
-			println('''«fps» fps''')
-			dirty = false
+//			val fps = X2Client::sendData(pg)
+//			println('''«fps» fps''')
+//			dirty = false
 		}
 	}
 	
@@ -232,7 +233,21 @@ class POVConsole extends PApplet {
 		val selectedCamera = JOptionPane::showInputDialog(this, "", "Select camera", JOptionPane::PLAIN_MESSAGE, null, cameras, null) as String
 		if (selectedCamera != null) {
 			println('''Opening camera «selectedCamera»''')
+			
+			val cameraProperties = new HashMap<String, String>
+			for (p : selectedCamera.split(",")) {
+				val kv = p.split("=")
+				cameraProperties.put(kv.get(0), kv.get(1))
+			}
+			
 			camera = setImage(new Capture(this, selectedCamera))
+			
+			val size = cameraProperties.get("size")
+			val wh = size.split("x")
+			val width = Integer::valueOf(wh.get(0))
+			val height = Integer::valueOf(wh.get(1))
+			autoscale(width, height)
+			
 			camera.start
 		}
 	}
@@ -248,7 +263,19 @@ class POVConsole extends PApplet {
 		}
 		image = img
 		dirty = true
+		
+		if (image.width > 0 && image.height > 0)
+			autoscale(image.width, image.height)
+		
 		img
+	}
+	
+	def autoscale(int width, int height) {
+		if (width < height) {
+			scaleFactor = (WIDTH as float) / width
+		} else {
+			scaleFactor = (HEIGHT as float) / height
+		}
 	}
 	
 }
