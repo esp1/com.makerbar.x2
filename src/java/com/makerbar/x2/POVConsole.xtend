@@ -44,10 +44,14 @@ class POVConsole extends PApplet {
 	int globeXOffset
 	int globeYOffset
 	
+	long then = System::currentTimeMillis / 33
+	int rotationSpeed
+	int rotationDirection = 1
+	
 	var boolean dirty
 	
 	override setup() {
-		size(800, 300)
+		size(700, 300)
 		
 		frameRate(30)
 		
@@ -57,13 +61,26 @@ class POVConsole extends PApplet {
 	}
 	
 	override draw() {
+		val now = System::currentTimeMillis / 33
+		if (now > then) {
+			setGlobeXOffset(globeXOffset + (rotationSpeed * rotationDirection))
+			then = now
+		}
+		
 		// Clear
 		background(100)
 		
 		pushMatrix
-		translate(80, 80)
+		translate(40, 80)
 		drawImage
-		translate(0, HEIGHT + 50)
+		
+		// Draw frame
+		pushStyle
+		stroke(200)
+		noFill
+		rect(-1, -1, WIDTH + 1, HEIGHT + 1)
+		popStyle
+		
 		popMatrix
 		
 		displayText
@@ -76,8 +93,6 @@ class POVConsole extends PApplet {
 	}
 	
 	def drawImage() {
-		pushMatrix
-		
 		// Draw image on pg
 		pg.beginDraw
 		pg.background(100)
@@ -114,13 +129,6 @@ class POVConsole extends PApplet {
 		
 		// Draw pg to screen
 		image(pg, 0, 0)
-		
-		// Draw frame
-		stroke(200)
-		noFill
-		rect(-1, -1, WIDTH + 2, HEIGHT + 2)
-		
-		popMatrix
 	}
 	
 	def void movieEvent(Movie m) {
@@ -131,15 +139,13 @@ class POVConsole extends PApplet {
 	def displayText() {
 		pushMatrix
 		pushStyle
+
+		text('''Display dimensions: «WIDTH» x «HEIGHT»''', 40, 20)
 		
-		translate(width - 400, 20)
+		translate(400, 20)
 		
 		stroke(255)
 		text('''
-			Display dimensions: «WIDTH» x «HEIGHT»
-			
-			----
-			
 			l : re/load properties
 			o : open image file
 			c : capture video
@@ -150,12 +156,15 @@ class POVConsole extends PApplet {
 				+/- : scale image
 				arrow keys : image offset
 				(hold shift for fine scale/offset)
+				0-9 : rotation speed
+				R : change rotation direction
 			«ENDIF»
 			
+			«IF rotationSpeed > 0»rotation speed: «rotationSpeed»«ENDIF»
 			«IF imageScaleFactor != 1»scale factor: «imageScaleFactor»«ENDIF»
 			«IF globeXOffset != 0»x offset: «globeXOffset»«ENDIF»
 			«IF globeYOffset != 0»y offset: «globeYOffset»«ENDIF»
-			''', 20, 20)
+			''', 0, 0)
 		
 		popStyle
 		popMatrix
@@ -179,6 +188,17 @@ class POVConsole extends PApplet {
 				case VK_RIGHT: setGlobeXOffset(globeXOffset + 1 * factor)
 				case VK_UP: setGlobeYOffset(globeYOffset - 1 * factor)
 				case VK_DOWN: setGlobeYOffset(globeYOffset + 1 * factor)
+				case VK_0: rotationSpeed = 0
+				case VK_1: rotationSpeed = 1
+				case VK_2: rotationSpeed = 2
+				case VK_3: rotationSpeed = 3
+				case VK_4: rotationSpeed = 4
+				case VK_5: rotationSpeed = 5
+				case VK_6: rotationSpeed = 6
+				case VK_7: rotationSpeed = 7
+				case VK_8: rotationSpeed = 8
+				case VK_9: rotationSpeed = 9
+				case VK_R: rotationDirection = if (rotationDirection == 1) -1 else 1
 			}
 		}
 	}
@@ -228,7 +248,7 @@ class POVConsole extends PApplet {
 		}
 	}
 	
-	val imageFileFilter = new FileNameExtensionFilter("Image file (*.png, *.jpg, *.bmp)", #{ "png", "jpg", "bmp" })
+	val imageFileFilter = new FileNameExtensionFilter("Image file (*.png, *.jpg, *.gif, *.bmp)", #{ "png", "jpg", "gif", "bmp" })
 	val movieFileFilter = new FileNameExtensionFilter("Movie file (*.mov)", #{ "mov" })
 	val fileChooser = new JFileChooser(new File(".")) => [
 		acceptAllFileFilterUsed = false
