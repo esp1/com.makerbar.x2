@@ -61,8 +61,6 @@ class POVConsole extends PApplet {
 	override setup() {
 		size(700, 300)
 		
-		frameRate(30)
-		
 		pg = createGraphics(WIDTH, HEIGHT)
 		
 		loadProperties
@@ -234,16 +232,16 @@ class POVConsole extends PApplet {
 				case VK_UP: setGlobeYOffset(globeYOffset - 1 * factor)
 				case VK_DOWN: setGlobeYOffset(globeYOffset + 1 * factor)
 				
-				case VK_0: rotationSpeed = 0
-				case VK_1: rotationSpeed = 1
-				case VK_2: rotationSpeed = 2
-				case VK_3: rotationSpeed = 3
-				case VK_4: rotationSpeed = 4
-				case VK_5: rotationSpeed = 5
-				case VK_6: rotationSpeed = 6
-				case VK_7: rotationSpeed = 7
-				case VK_8: rotationSpeed = 8
-				case VK_9: rotationSpeed = 9
+				case VK_0: setRotationSpeed(0)
+				case VK_1: setRotationSpeed(1)
+				case VK_2: setRotationSpeed(2)
+				case VK_3: setRotationSpeed(3)
+				case VK_4: setRotationSpeed(4)
+				case VK_5: setRotationSpeed(5)
+				case VK_6: setRotationSpeed(6)
+				case VK_7: setRotationSpeed(7)
+				case VK_8: setRotationSpeed(8)
+				case VK_9: setRotationSpeed(9)
 				case VK_R: toggleRotationDirection
 				
 				case VK_F: toggleFlipImage
@@ -273,6 +271,10 @@ class POVConsole extends PApplet {
 	def setGlobeYOffset(int yOffset) {
 		globeYOffset = yOffset % HEIGHT
 		if (globeYOffset < 0) globeYOffset = globeYOffset + HEIGHT
+	}
+	
+	def setRotationSpeed(int rotationSpeed) {
+		this.rotationSpeed = rotationSpeed
 	}
 	
 	def toggleRotationDirection() {
@@ -322,6 +324,9 @@ class POVConsole extends PApplet {
 			properties.load(reader)
 			reader.close
 			
+			val frameRateProperty = properties.getProperty("frameRate")
+			if (frameRateProperty != null) frameRate(Float::valueOf(frameRateProperty))
+			
 			val imageFileProperty = properties.getProperty("imageFile")
 			if (imageFileProperty != null) setImage(loadImage(imageFileProperty))
 			
@@ -338,13 +343,28 @@ class POVConsole extends PApplet {
 			
 			val yOffsetProperty = properties.getProperty("yOffset")
 			if (yOffsetProperty != null) setGlobeYOffset(Integer::parseInt(yOffsetProperty))
+			
+			val rotationSpeedProperty = properties.getProperty("rotationSpeed")
+			if (rotationSpeedProperty != null) setRotationSpeed(Integer::parseInt(rotationSpeedProperty))
+			
+			val rotationDirectionProperty = properties.getProperty("rotationDirection")
+			if (rotationDirectionProperty != null) rotationDirection = Integer::parseInt(rotationDirectionProperty)
+			
+			val flipImageProperty = properties.getProperty("flipImage")
+			if (flipImageProperty != null) flipImage = Boolean::parseBoolean(flipImageProperty)
+			
+			val brightnessProperty = properties.getProperty("brightness")
+			if (brightnessProperty != null) brightness = Float::parseFloat(brightnessProperty)
+			
+			val contrastProperty = properties.getProperty("contrast")
+			if (contrastProperty != null) contrast = Float::parseFloat(contrastProperty)
 		}
 	}
 	
 	val imageFileFilter = new FileNameExtensionFilter("Image file (*.png, *.jpg, *.bmp)", #{ "png", "jpg", "bmp" })
 	val gifImageFileFilter = new FileNameExtensionFilter("GIF Image file (*.gif)", #{ "gif" })
 	val movieFileFilter = new FileNameExtensionFilter("Movie file (*.mov)", #{ "mov" })
-	val fileChooser = new JFileChooser(new File(".")) => [
+	val fileChooser = new JFileChooser(new File("images")) => [
 		acceptAllFileFilterUsed = false
 		addChoosableFileFilter = imageFileFilter
 		addChoosableFileFilter = gifImageFileFilter
