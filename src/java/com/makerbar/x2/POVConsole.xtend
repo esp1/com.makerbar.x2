@@ -36,6 +36,7 @@ class POVConsole extends PApplet {
 	String selectedCamera
 	
 	PGraphics pg
+	PGraphics imgPG
 	
 	int imageWidth
 	int imageHeight
@@ -62,6 +63,7 @@ class POVConsole extends PApplet {
 		size(700, 300)
 		
 		pg = createGraphics(WIDTH, HEIGHT)
+		imgPG = createGraphics(WIDTH, HEIGHT)
 		
 		loadProperties
 	}
@@ -151,9 +153,15 @@ class POVConsole extends PApplet {
 					
 					pg.pushMatrix
 					pg.translate(x, y)
-					pg.translate(imageXOffset, imageYOffset)
-					pg.scale(imageScaleFactor)
-					pg.image(xImg, 0, 0)
+					
+					imgPG.beginDraw
+					imgPG.background(0)
+					imgPG.translate(imageXOffset, imageYOffset)
+					imgPG.scale(imageScaleFactor)
+					imgPG.image(xImg, 0, 0)
+					imgPG.endDraw
+					
+					pg.image(imgPG, 0, 0)
 					pg.popMatrix
 					
 					y = y + HEIGHT
@@ -186,8 +194,6 @@ class POVConsole extends PApplet {
 			o : open image file
 			c : capture video
 			
-			----
-			
 			«IF image != null»
 				+/- : scale image
 				arrow keys : image offset
@@ -197,13 +203,15 @@ class POVConsole extends PApplet {
 				F : flip image
 			«ENDIF»
 			
-			«IF rotationSpeed > 0»rotation speed: «rotationSpeed»«ENDIF»
+			«IF imageScaleFactor != 1»scale factor: «imageScaleFactor»«ENDIF»
+			«IF imageXOffset != 0»image x offset: «imageXOffset»«ENDIF»
+			«IF imageYOffset != 0»image y offset: «imageYOffset»«ENDIF»
 			«IF flipImage»flipped«ENDIF»
 			«IF brightness != 0»brightness: «brightness»«ENDIF»
 			«IF contrast != 1»contrast: «contrast»«ENDIF»
-			«IF imageScaleFactor != 1»scale factor: «imageScaleFactor»«ENDIF»
-			«IF globeXOffset != 0»x offset: «globeXOffset»«ENDIF»
-			«IF globeYOffset != 0»y offset: «globeYOffset»«ENDIF»
+			«IF rotationSpeed > 0»rotation speed: «rotationSpeed»«ENDIF»
+			«IF globeXOffset != 0»globe x offset: «globeXOffset»«ENDIF»
+			«IF globeYOffset != 0»globe y offset: «globeYOffset»«ENDIF»
 			''', 0, 0)
 		
 		popStyle
@@ -226,6 +234,11 @@ class POVConsole extends PApplet {
 				
 				case VK_EQUALS: setImageScaleFactor(imageScaleFactor + 0.01f * factor)
 				case VK_MINUS: setImageScaleFactor(imageScaleFactor - 0.01f * factor)
+				
+				case VK_H: imageXOffset = imageXOffset - 1 * factor
+				case VK_K: imageXOffset = imageXOffset + 1 * factor
+				case VK_U: imageYOffset = imageYOffset - 1 * factor
+				case VK_J: imageYOffset = imageYOffset + 1 * factor
 				
 				case VK_LEFT: setGlobeXOffset(globeXOffset - 1 * factor)
 				case VK_RIGHT: setGlobeXOffset(globeXOffset + 1 * factor)
@@ -339,11 +352,11 @@ class POVConsole extends PApplet {
 			val scaleFactorProperty = properties.getProperty("scaleFactor")
 			if (scaleFactorProperty != null) setImageScaleFactor(Float::parseFloat(scaleFactorProperty))
 			
-			val xOffsetProperty = properties.getProperty("xOffset")
-			if (xOffsetProperty != null) setGlobeXOffset(Integer::parseInt(xOffsetProperty))
+			val imageXOffsetProperty = properties.getProperty("imageXOffset")
+			if (imageXOffsetProperty != null) imageXOffset = Integer::parseInt(imageXOffsetProperty)
 			
-			val yOffsetProperty = properties.getProperty("yOffset")
-			if (yOffsetProperty != null) setGlobeYOffset(Integer::parseInt(yOffsetProperty))
+			val imageYOffsetProperty = properties.getProperty("imageYOffset")
+			if (imageYOffsetProperty != null) imageYOffset = Integer::parseInt(imageYOffsetProperty)
 			
 			val rotationSpeedProperty = properties.getProperty("rotationSpeed")
 			if (rotationSpeedProperty != null) setRotationSpeed(Integer::parseInt(rotationSpeedProperty))
@@ -359,6 +372,12 @@ class POVConsole extends PApplet {
 			
 			val contrastProperty = properties.getProperty("contrast")
 			if (contrastProperty != null) contrast = Float::parseFloat(contrastProperty)
+			
+			val globeXOffsetProperty = properties.getProperty("globeXOffset")
+			if (globeXOffsetProperty != null) setGlobeXOffset(Integer::parseInt(globeXOffsetProperty))
+			
+			val globeYOffsetProperty = properties.getProperty("globeYOffset")
+			if (globeYOffsetProperty != null) setGlobeYOffset(Integer::parseInt(globeYOffsetProperty))
 		}
 	}
 	
