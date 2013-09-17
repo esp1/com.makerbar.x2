@@ -332,13 +332,7 @@ class POVConsole extends PApplet {
 			if (frameRateProperty != null) frameRate(Float::valueOf(frameRateProperty))
 			
 			val imageFileProperty = properties.getProperty("imageFile")
-			if (imageFileProperty != null) setImage(loadImage(imageFileProperty))
-			
-			val gifImageFileProperty = properties.getProperty("gifImageFile")
-			if (gifImageFileProperty != null) (gif = setImage(new Gif(this, gifImageFileProperty))).loop
-			
-			val movieFileProperty = properties.getProperty("movieFile")
-			if (movieFileProperty != null) (movie = setImage(new Movie(this, movieFileProperty))).loop
+			if (imageFileProperty != null) imageFileProperty.openImage
 			
 			selectedCamera = properties.getProperty("camera")
 			
@@ -368,40 +362,40 @@ class POVConsole extends PApplet {
 		}
 	}
 	
-	val imageFileFilter = new FileNameExtensionFilter("Image file (*.png, *.jpg, *.bmp)", #{ "png", "jpg", "bmp" })
-	val gifImageFileFilter = new FileNameExtensionFilter("GIF Image file (*.gif)", #{ "gif" })
-	val movieFileFilter = new FileNameExtensionFilter("Movie file (*.mov)", #{ "mov" })
+	val imageFileFilter = new FileNameExtensionFilter("Image/Movie file (png, jpg, bmp, gif, mov)", #{ "png", "jpg", "bmp", "gif", "mov" })
 	val fileChooser = new JFileChooser(new File("images")) => [
 		acceptAllFileFilterUsed = false
 		addChoosableFileFilter = imageFileFilter
-		addChoosableFileFilter = gifImageFileFilter
-		addChoosableFileFilter = movieFileFilter
 		fileFilter = imageFileFilter
 	]
 	
 	def void openImageFile() {
+		resetSettings
+		
 		if (fileChooser.showOpenDialog(this) == APPROVE_OPTION) {
 			val selectedFile = fileChooser.selectedFile
-			switch (fileChooser.fileFilter) {
-				case imageFileFilter: {
-					println('''Image file: «selectedFile.canonicalPath»''')
-					setImage(loadImage(selectedFile.canonicalPath))
-				}
-				case gifImageFileFilter: {
-					println('''GIF Image file: «selectedFile.canonicalPath»''')
-					gif = setImage(new Gif(this, selectedFile.canonicalPath))
-					gif.loop
-				}
-				case movieFileFilter: {
-					println('''Movie file: «selectedFile.canonicalPath»''')
-					movie = setImage(new Movie(this, selectedFile.canonicalPath))
-					movie.loop
-				}
-			}
+			selectedFile.canonicalPath.openImage
+		}
+	}
+	
+	def void openImage(String filePath) {
+		if (filePath.toLowerCase.endsWith(".gif")) {
+			println('''GIF Image file: «filePath»''')
+			gif = setImage(new Gif(this, filePath))
+			gif.loop
+		} else if (filePath.toLowerCase.endsWith(".mov")) {
+			println('''Movie file: «filePath»''')
+			movie = setImage(new Movie(this, filePath))
+			movie.loop
+		} else {
+			println('''Image file: «filePath»''')
+			setImage(loadImage(filePath))
 		}
 	}
 	
 	def void captureVideo() {
+		resetSettings
+		
 		if (selectedCamera == null) {
 			cursor(WAIT)
 			val cameras = Capture::list
