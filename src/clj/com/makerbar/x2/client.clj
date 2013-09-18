@@ -1,7 +1,7 @@
 (ns com.makerbar.x2.client
   (:gen-class
-    :name com.makerbar.x2.X2Client
-    :methods [#^{:static true} [sendData [processing.core.PImage] double]])
+    :name com.makerbar.x2.client.X2Client
+    :methods [#^{:static true} [sendData ["[I"] double]])
   (:require [aleph.tcp :refer [tcp-client]]
             [gloss.core :refer [defcodec header repeated]]
             [gloss.io :refer [decode encode]]
@@ -26,6 +26,5 @@
       (decode receive-codec (.toByteBuffer (wait-for-message ch))))))
 
 (defn -sendData
-  [pimage]
-  (let [data (seq (.pixels pimage))]
-    (:fps (x2-client data))))
+  [data]
+  (:fps (x2-client (seq data))))
