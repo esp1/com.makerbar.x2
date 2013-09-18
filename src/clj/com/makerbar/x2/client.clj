@@ -1,7 +1,7 @@
 (ns com.makerbar.x2.client
   (:gen-class
     :name com.makerbar.x2.client.X2Client
-    :methods [#^{:static true} [sendData ["[I"] double]])
+    :methods [#^{:static true} [sendData [String "[I"] double]])
   (:require [aleph.tcp :refer [tcp-client]]
             [gloss.core :refer [defcodec header repeated]]
             [gloss.io :refer [decode encode]]
@@ -17,7 +17,6 @@
 
 (defn x2-client
   "X2 client"
-  ([data] (x2-client "10.0.0.200" 10000 data))
   ([host data] (x2-client host 10000 data))
   ([host port data]
 ;    (println "host" host ", port" port ", data" (count data))
@@ -26,5 +25,5 @@
       (decode receive-codec (.toByteBuffer (wait-for-message ch))))))
 
 (defn -sendData
-  [data]
-  (:fps (x2-client (seq data))))
+  [host data]
+  (:fps (x2-client host (seq data))))
