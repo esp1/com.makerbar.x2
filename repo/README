@@ -1,4 +1,0 @@
-Deploy artifacts to local repository like so:
-
-mvn deploy:deploy-file -DgroupId=org.processing -DartifactId=core -Dversion=2.0b8 -Dpackaging=jar -Dfile=lib/processing-2.0b8/core/core.jar -Durl=file:repo
-
