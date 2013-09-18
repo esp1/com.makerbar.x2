@@ -1,6 +1,6 @@
-# x2-client
+# com.makerbar.x2
 
-A Clojure library designed to ... well, that part is up to you.
+Network client for the Orbital Rendersphere
 
 ## Usage
 
