@@ -1,8 +1,8 @@
 (ns com.makerbar.x2.client
   (:gen-class
     :name com.makerbar.x2.client.X2Client
-    :methods [#^{:static true} [sendData [String "[I"] double]
-              #^{:static true} [getRotationsPerSecond [String] double]
+    :methods [#^{:static true} [sendData [String "[I"] java.util.List]
+              #^{:static true} [getStats [String] java.util.List]
               #^{:static true} [setXOffset [String int] int]
               #^{:static true} [setBrightness [String float] float]
               #^{:static true} [setContrast [String float] float]])
@@ -23,8 +23,9 @@
 (defcodec command-codec
   :byte)
 
-(defcodec return-double-codec
-  {:value :float64-le})
+(defcodec return-stats-codec
+  {:rps :float64-le
+   :fps :uint32-le})
 
 (defcodec return-int-codec
   {:value :uint32-le})
@@ -37,13 +38,13 @@
 ;    (println "host" host ", port" port ", data" (count data))
   (let [ch (get-ch host)]
     (enqueue ch (encode send-codec data))
-    (decode return-double-codec (.toByteBuffer (wait-for-message ch)))))
+    (decode return-stats-codec (.toByteBuffer (wait-for-message ch)))))
 
-(defn get-rotations-per-second
+(defn get-stats
   [host]
   (let [ch (get-ch host)]
     (enqueue ch (encode command-codec \?))
-    (decode return-double-codec (.toByteBuffer (wait-for-message ch)))))
+    (decode return-stats-codec (.toByteBuffer (wait-for-message ch)))))
 
 (defn set-value
   [host command value]
@@ -54,11 +55,11 @@
 
 (defn -sendData
   [host data]
-  (:value (send-data host (seq data))))
+  (vals (send-data host (seq data))))
 
-(defn -getRotationsPerSecond
+(defn -getStats
   [host]
-  (:value (get-rotations-per-second host)))
+  (vals (get-stats host)))
 
 (defn -setXOffset
   [host value]
