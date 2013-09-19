@@ -1,29 +1,79 @@
 (ns com.makerbar.x2.client
   (:gen-class
     :name com.makerbar.x2.client.X2Client
-    :methods [#^{:static true} [sendData [String "[I"] double]])
+    :methods [#^{:static true} [sendData [String "[I"] double]
+              #^{:static true} [getRotationsPerSecond [String] double]
+              #^{:static true} [setXOffset [String int] int]
+              #^{:static true} [setBrightness [String float] float]
+              #^{:static true} [setContrast [String float] float]])
   (:require [aleph.tcp :refer [tcp-client]]
             [gloss.core :refer [defcodec header repeated]]
             [gloss.io :refer [decode encode]]
             [lamina.core :refer [enqueue wait-for-message wait-for-result]]))
+
+(defn get-ch
+  [host]
+  (wait-for-result (tcp-client {:host host, :port 10000})))
 
 (defcodec send-codec
   (header :byte
           (fn [h] (repeated :uint32))  ; body is repeated bytes, with int32 length prefix 
           (fn [b] \0)))  ; header = char \0
 
-(defcodec receive-codec
-  {:fps :float64-le})
+(defcodec command-codec
+  :byte)
 
-(defn x2-client
-  "X2 client"
-  ([host data] (x2-client host 10000 data))
-  ([host port data]
+(defcodec return-double-codec
+  {:value :float64-le})
+
+(defcodec return-int-codec
+  {:value :uint32-le})
+
+(defcodec return-float-codec
+  {:value :float32-le})
+
+(defn send-data
+  [host data]
 ;    (println "host" host ", port" port ", data" (count data))
-    (let [ch (wait-for-result (tcp-client {:host host, :port port}))]
-      (enqueue ch (encode send-codec data))
-      (decode receive-codec (.toByteBuffer (wait-for-message ch))))))
+  (let [ch (get-ch host)]
+    (enqueue ch (encode send-codec data))
+    (decode return-double-codec (.toByteBuffer (wait-for-message ch)))))
+
+(defn get-rotations-per-second
+  [host]
+  (let [ch (get-ch host)]
+    (enqueue ch (encode command-codec \?))
+    (decode return-double-codec (.toByteBuffer (wait-for-message ch)))))
+
+(defn set-value
+  [host command value]
+  (let [ch (get-ch host)]
+    (enqueue ch (encode command-codec command))))
+
+;;; Java static methods
 
 (defn -sendData
   [host data]
-  (:fps (x2-client host (seq data))))
+  (:value (send-data host (seq data))))
+
+(defn -getRotationsPerSecond
+  [host]
+  (:value (get-rotations-per-second host)))
+
+(defn -setXOffset
+  [host value]
+  (let [ch (get-ch host)]
+    (enqueue ch (encode command-codec \x))
+    (:value (decode return-int-codec (.toByteBuffer (wait-for-message ch))))))
+
+(defn -setBrightness
+  [host value]
+  (let [ch (get-ch host)]
+    (enqueue ch (encode command-codec \b))
+    (:value (decode return-float-codec (.toByteBuffer (wait-for-message ch))))))
+
+(defn -setContrast
+  [host value]
+  (let [ch (get-ch host)]
+    (enqueue ch (encode command-codec \c))
+    (:value (decode return-float-codec (.toByteBuffer (wait-for-message ch))))))
