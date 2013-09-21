@@ -46,11 +46,6 @@
     (enqueue ch (encode command-codec \?))
     (decode return-stats-codec (.toByteBuffer (wait-for-message ch)))))
 
-(defn set-value
-  [host command value]
-  (let [ch (get-ch host)]
-    (enqueue ch (encode command-codec command))))
-
 ;;; Java static methods
 
 (defn -sendData
